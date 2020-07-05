@@ -3,6 +3,7 @@ package com.example.firestore;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -20,6 +22,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -27,11 +30,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final String TAG = "FirebaseFirestore" ;
     private EditText title_et,thoughts_et;
-    private Button saveBtn,showBtn;
+    private Button saveBtn,showBtn,updateTitle,updateThought,deleteRecord,colletionBtn;
     private TextView title_tv,thought_tv;
 
     private FirebaseFirestore firestore = FirebaseFirestore.getInstance();
     private DocumentReference documentReference = firestore.document("Journal/First thoughts");
+    private CollectionReference collectionReference = firestore.collection("Journal");
 
     public static final String KEY_TITLE = "title";
     public static final String KEY_THOUGHT = "thought";
@@ -41,6 +45,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        setters();
+
+
+    }
+
+    public void setters(){
         title_et = findViewById(R.id.title);
         thoughts_et = findViewById(R.id.thoughts);
 
@@ -49,9 +59,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         saveBtn = findViewById(R.id.saveBtn);
         showBtn = findViewById(R.id.showBtn);
+        updateTitle = findViewById(R.id.updateTitle);
+        updateThought = findViewById(R.id.updateThought);
+        deleteRecord = findViewById(R.id.deleteData);
+        colletionBtn = findViewById(R.id.crt_Collection);
 
         saveBtn.setOnClickListener(this);
         showBtn.setOnClickListener(this);
+        updateTitle.setOnClickListener(this);
+        updateThought.setOnClickListener(this);
+        deleteRecord.setOnClickListener(this);
+        colletionBtn.setOnClickListener(this);
     }
 
     @Override
@@ -89,14 +107,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     return;
                 }
 
-                HashMap<String,Object> params = new HashMap<>();
+                /*HashMap<String,Object> params = new HashMap<>();
 
                 params.put(KEY_TITLE,title);
-                params.put(KEY_THOUGHT,thoughts);
+                params.put(KEY_THOUGHT,thoughts);*/
+
+                DocumentData data = new DocumentData();
+
+                data.setTitle(title);
+                data.setThought(thoughts);
 
                 firestore.collection("Journal")
                         .document("First thoughts")
-                        .set(params)
+                        .set(data)
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
@@ -110,6 +133,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             Log.e(TAG, "onFailure: " + e.toString() );
                         }
                     });
+                break;
+
+            case (R.id.updateTitle):
+                String updateTitle = title_et.getText().toString().trim();
+
+                HashMap<String,Object> param = new HashMap<>();
+
+                param.put(KEY_TITLE , updateTitle);
+
+                documentReference.update(param);
+                break;
+
+            case (R.id.updateThought):
+                String updateThought = thoughts_et.getText().toString().trim();
+
+                HashMap<String,Object> params = new HashMap<>();
+
+                params.put(KEY_THOUGHT , updateThought);
+
+                documentReference.update(params);
+                break;
+
+            case (R.id.deleteData):
+                documentReference.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Toast.makeText(MainActivity.this, "Deleted record!", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(MainActivity.this, "Something went wrong!", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "onFailure: " + e.toString() );
+                    }
+                });
+                break;
+            case (R.id.crt_Collection):
+                startActivity(new Intent(MainActivity.this,CreateCollectionActivity.class));
                 break;
         }
     }
